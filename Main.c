@@ -3,7 +3,7 @@
 int main (void)
 {
 
-    printf("Hello World\n");
+    printf("CURocket\n");
     return(0);
-    printf("Hello World\n");
+
 }
