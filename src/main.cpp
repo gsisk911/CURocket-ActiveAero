@@ -5,6 +5,7 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
+#include <Adafruit_BMP3XX.h>
 #define onboard 13
 #define ServoCenter 1500
 #define ServoScalar 10
@@ -15,7 +16,7 @@ Servo PitchA;
 Servo PitchB;
 
 unsigned long pidPeriod = 500;
-unsigned long setpointLA = 512;
+long setpointLA = 0;
 int32_t kpLA = 1011120;
 int32_t kiLA = 1320 * 1000;
 int32_t kdLA = 5280 * 1000;
@@ -40,9 +41,9 @@ uint8_t qn = 32;    // Set QN to 32 - DAC resolution
 */
 
 Pid::PID *pidControllerLA = new Pid::PID(setpointLA, kpLA, kiLA, kdLA, qnLA);
-//Pid::PID pidControllerX = Pid::PID(setpointx, kpx, kix, kdx, qnx);
-//Pid::PID pidControllerY = Pid::PID(setpointy, kpy, kiy, kdy, qny);
-//Pid::PID pidControllerZ = Pid::PID(setpointz, kpz, kiz, kdz, qnz);
+//Pid::PID *pidControllerX = new Pid::PID(setpointx, kpx, kix, kdx, qnx);
+//Pid::PID *pidControllerY = new Pid::PID(setpointy, kpy, kiy, kdy, qny);
+//Pid::PID *pidControllerZ = new Pid::PID(setpointz, kpz, kiz, kdz, qnz);
 
 const unsigned short DAC_OUTPUT_PIN = 2;
 const unsigned short ADC_INPUT_PIN = 0;
@@ -63,6 +64,8 @@ double DEG_2_RAD = 0.01745329251; //trig functions require radians, BNO055 outpu
 //                                   id, address
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 
+void output();
+
 void setup() 
 {
   // put your setup code here, to run once:;
@@ -79,10 +82,8 @@ void setup()
 
   pidControllerLA->setOutputMin(0);      // minimum servo output
   pidControllerLA->setOutputMax(7000);   // maximum servo output to be scaled
-                                      // but the maximum output can be adjusted down.
-
-  pidControllerLA->init(analogRead(ADC_INPUT_PIN));  // Initialize the pid controller to make sure there
-                                      // are no output spikes
+  
+  pidControllerLA->init(analogRead(ADC_INPUT_PIN));  // Initialize the pid controller to make sure there are no output spikes
 }
 
 void loop() 
@@ -129,7 +130,7 @@ void loop()
   }
 
 
-  setpointLA = (((headingVel)^2)/2); /// over distance to target
+  pidControllerLA->setSetpoint(((headingVel)^2)/2); /// over distance to target
 
   static unsigned long lastTime = millis();    // Initialize lastTime *once* during the first loop iteration
 
@@ -155,7 +156,6 @@ void loop()
   
 }
 
-
 void output() //combine data from roll control PID loops and altitude control loop to get 
 {
   int ServoOutputYA;
@@ -163,14 +163,15 @@ void output() //combine data from roll control PID loops and altitude control lo
   int ServoOutputPA;
   int ServoOutputPB;
 
-  ServoOutputYA = ServoCenter + (outputValueLA / ServoScalar); //+ (outputValueZ)
-  ServoOutputYB = ServoCenter - (outputValueLA / ServoScalar); //- (outputValueZ)
-  ServoOutputPA = ServoCenter + (outputValueLA / ServoScalar); //+ (outputValueX)
-  ServoOutputPB = ServoCenter - (outputValueLA / ServoScalar); //- (outputValueX)
+  ServoOutputYA = ServoCenter + (outputValueLA / ServoScalar); //+ (outputValueZ) + (outputValueY);
+  ServoOutputYB = ServoCenter - (outputValueLA / ServoScalar); //- (outputValueZ) + (outputValueY);
+  ServoOutputPA = ServoCenter + (outputValueLA / ServoScalar); //+ (outputValueX) + (outputValueY);
+  ServoOutputPB = ServoCenter - (outputValueLA / ServoScalar); //- (outputValueX) + (outputValueY);
 
   RollA.writeMicroseconds(ServoOutputYA);
   RollB.writeMicroseconds(ServoOutputYB);
   PitchA.writeMicroseconds(ServoOutputPA);
   PitchB.writeMicroseconds(ServoOutputPB);
 }
+
 
