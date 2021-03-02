@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <stdio.h>
 #include <Servo.h>
-#include <pid.h>
+#include "pid.h"
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
@@ -24,20 +24,20 @@ uint8_t qnLA = 32;    // Set QN to 32 - DAC resolution
 /*
 Loops for XYZ control
 unsigned long setpointX = 90;
-int32_t kp = 1011120;
-int32_t ki = 1320 * 1000;
-int32_t kd = 5280 * 1000;
-uint8_t qn = 32;    // Set QN to 32 - DAC resolution
+int32_t kpx = 1011120;
+int32_t kix = 1320 * 1000;
+int32_t kdx = 5280 * 1000;
+uint8_t qnx = 32;    // Set QN to 32 - DAC resolution
 unsigned long setpointY = 0;
-int32_t kp = 1011120;
-int32_t ki = 1320 * 1000;
-int32_t kd = 5280 * 1000;
-uint8_t qn = 32;    // Set QN to 32 - DAC resolution
+int32_t kpy = 1011120;
+int32_t kiy = 1320 * 1000;
+int32_t kdy = 5280 * 1000;
+uint8_t qny = 32;    // Set QN to 32 - DAC resolution
 unsigned long setpointZ = 90;
-int32_t kp = 1011120;
-int32_t ki = 1320 * 1000;
-int32_t kd = 5280 * 1000;
-uint8_t qn = 32;    // Set QN to 32 - DAC resolution
+int32_t kpz = 1011120;
+int32_t kiz = 1320 * 1000;
+int32_t kdz = 5280 * 1000;
+uint8_t qnz = 32;    // Set QN to 32 - DAC resolution
 */
 
 Pid::PID *pidControllerLA = new Pid::PID(setpointLA, kpLA, kiLA, kdLA, qnLA);
@@ -140,7 +140,10 @@ void loop()
     outputValueLA = pidControllerLA->compute(inputValue);   // Compute the PID output
     analogWrite(DAC_OUTPUT_PIN, outputValueLA);    // Write it to the DAC
 
-    output(); //call output everytime the PID loop runs
+      //RollA.writeMicroseconds(ServoOutputYA);
+      //RollB.writeMicroseconds(ServoOutputYB);
+      //PitchA.writeMicroseconds(ServoOutputPA);
+      //PitchB.writeMicroseconds(ServoOutputPB); //call output everytime the PID loop runs
 
     lastTime = currentTime;
     Serial.println("------------------");
@@ -156,22 +159,9 @@ void loop()
   
 }
 
-void output() //combine data from roll control PID loops and altitude control loop to get 
-{
-  int ServoOutputYA;
-  int ServoOutputYB;
-  int ServoOutputPA;
-  int ServoOutputPB;
 
-  ServoOutputYA = ServoCenter + (outputValueLA / ServoScalar); //+ (outputValueZ) + (outputValueY);
-  ServoOutputYB = ServoCenter - (outputValueLA / ServoScalar); //- (outputValueZ) + (outputValueY);
-  ServoOutputPA = ServoCenter + (outputValueLA / ServoScalar); //+ (outputValueX) + (outputValueY);
-  ServoOutputPB = ServoCenter - (outputValueLA / ServoScalar); //- (outputValueX) + (outputValueY);
 
-  RollA.writeMicroseconds(ServoOutputYA);
-  RollB.writeMicroseconds(ServoOutputYB);
-  PitchA.writeMicroseconds(ServoOutputPA);
-  PitchB.writeMicroseconds(ServoOutputPB);
-}
+
+
 
 
