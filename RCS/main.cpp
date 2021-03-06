@@ -77,6 +77,10 @@ void printEvent(sensors_event_t* event) {
   x = event->gyro.x;
   y = event->gyro.y;
   z = event->gyro.z;
+
+  pidControllerX -> setSetpoint(90);
+  pidControllerY -> setSetpoint(90);
+  pidControllerZ -> setSetpoint(90);
   
   
   // Serial.print("x= ");
